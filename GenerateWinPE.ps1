@@ -3,10 +3,11 @@
 # Error handling
 $ErrorActionPreference = "Stop"
 function Handle-Error {
-    Write-Error "Something went wrong Cleaning up and exiting"
+    Write-Host "Something went wrong Cleaning up and exiting"
     Dism /Unmount-Image /MountDir:.tmp\WinPE_amd64\mount /Discard
     Remove-Item ".tmp" -Recurse -Force
     Read-Host "Press Enter to continue"
+    Write-Error "Unknown error"
     exit 1
 } trap { Handle-Error }
 
@@ -96,7 +97,7 @@ Write-Host "Copying update files to WinPE"
 Copy-Item -Path .\updates\* -Destination "$winPEMountPath\updates" -Recurse
 
 Write-Host "Copying startnet.cmd to WinPE"
-Copy-Item -Path .\startnet.cmd -Destination "$winPEMountPath\Windows\System32\startnet.cmd" -Force
+Copy-Item -Path .\files\startnet.cmd -Destination "$winPEMountPath\Windows\System32\startnet.cmd" -Force
 
 
 # Commiting changes and unmounting WinPE image
@@ -105,9 +106,9 @@ Dism /Unmount-Image /MountDir:$winPEMountPath /Commit
 
 Write-Host "Copying result files"
 md result
-Copy-Item -Path .\.tmp\WinPE_amd64\boot\BCD -Destination .\result\bcd
-Copy-Item -Path .\.tmp\WinPE_amd64\boot\boot.sdi -Destination .\result\boot.sdi
-Copy-Item -Path .\.tmp\WinPE_amd64\sources\boot.wim -Destination .\result\boot.wim
+Copy-Item -Path .\.tmp\WinPE_amd64\media\boot\BCD -Destination .\result\bcd
+Copy-Item -Path .\.tmp\WinPE_amd64\media\boot\boot.sdi -Destination .\result\boot.sdi
+Copy-Item -Path .\.tmp\WinPE_amd64\media\sources\boot.wim -Destination .\result\boot.wim
 
 Write-Host "Cleaning up"
 Remove-Item ".tmp" -Recurse -Force
