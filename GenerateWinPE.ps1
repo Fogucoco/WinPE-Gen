@@ -73,6 +73,7 @@ Write-Host "Creating WinPE directory structure"
 copype amd64 .tmp\WinPE_amd64
 
 Write-Host "Mounting WinPE image"
+Dism /Unmount-Image /MountDir:.tmp\WinPE_amd64\mount /Discard # copype mounts it not the way we want, so unmounting first
 Dism /Mount-Image /ImageFile:.tmp\WinPE_amd64\media\sources\boot.wim /Index:1 /MountDir:$winPEMountPath
 
 
