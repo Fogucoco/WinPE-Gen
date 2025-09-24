@@ -84,5 +84,10 @@ Copy-Item -Path .\drivers\* -Destination "$winPEMountPath\drivers" -Recurse
 Write-Host "Copying update files to WinPE"
 Copy-Item -Path .\updates\* -Destination "$winPEMountPath\updates" -Recurse
 
+Write-Host "Copying startnet.cmd to WinPE"
+Copy-Item -Path .\startnet.cmd -Destination "$winPEMountPath\Windows\System32\startnet.cmd" -Force
+
+
+# Commiting changes and unmounting WinPE image
 Write-Host "Committing and unmounting WinPE image"
 Dism /Unmount-Image /MountDir:$winPEMountPath /Commit
