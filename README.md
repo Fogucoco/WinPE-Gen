@@ -22,4 +22,4 @@ Generates WinPE image for Foreman provisioning
 
 ___
 **Author:** Sergey Malyuk
-**License:** BSD
+**License:** GPL
