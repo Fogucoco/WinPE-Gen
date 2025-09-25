@@ -25,5 +25,5 @@ Same logic here like with the .inf files
 7. Extract your Windows ISO on a file server and add it as an installation media in Foreman
 
 ___
-**Author:** Sergey Malyuk
+**Author:** Sergey Malyuk  
 **License:** GPL
