@@ -1,0 +1,120 @@
+<%#
+kind: script
+name: Windows peSetup.cmd
+model: ProvisioningTemplate
+oses:
+- Windows
+test_on:
+- windows10_dhcp
+description: |
+  
+  params:
+  - editionIndex: Windows edition index to install (default: 1). Use dism /Get-WimInfo /WimFile:<path to install.wim or install.esd. You can find it in your ISO to get the index of your desired edition
+  - windowsLicenseKey: ABCDE-ABCDE-ABCDE-ABCDE-ABCDE # Valid Windows license key
+  - windowsLicenseOwner: Company, INC # Legal owner of the Windows license key
+-%>
+
+@echo off
+
+<%
+  iface = @host.provision_interface
+  proxy_uri = host_param('http-proxy') ? "#{host_param('http-proxy')}:#{host_param('http-proxy-port', 3128)}" : nil
+  proxy_string = proxy_uri ? "-e http_proxy=#{proxy_uri}" : ""
+%>
+
+setlocal enableextensions enabledelayedexpansion
+set editionIndex=<%= host_param('editionIndex', 1) %>
+
+<%= @host.diskLayout %>
+
+<% if iface.subnet && !iface.subnet.dhcp_boot_mode? -%>
+echo Setting network config for static interfaces
+    netsh interface ip set address name="Ethernet0" static "<%= iface.ip %>" "<%= iface.subnet.mask %>" "<%= iface.subnet.gateway %>"
+    net stop "DHCP-Client"
+    net stop "DHCP Client"
+    net start "DNS-Client"
+    net start "DNS Client"
+    ping -n 2 <%= iface.subnet.gateway %>
+    netsh interface ip set dns name="Ethernet0" static "<%= iface.subnet.dns_primary %>"
+<% end -%>
+
+echo Downloading main install image
+
+set install-image=install.esd
+wget <%= proxy_string %>"<%= medium_uri %>sources/%install-image%" -O C:\%install-image%
+if not %ERRORLEVEL% == 0 (
+    echo WARNING: Couldn't download install.esd, trying install.wim...
+    set install-image=install.wim
+    wget <%= proxy_string %>"<%= medium_uri %>sources/%install-image%" -O C:\%install-image%
+)
+
+echo Creating the Panther directory if needed
+IF not exist C:\Windows\Panther\ (mkdir C:\Windows\Panther\)
+
+echo Installing %install-image%
+dism /Apply-Image /ImageFile:C:\%install-image% /Index:%editionIndex% /ApplyDir:C:\
+
+echo Downloading unattend.xml
+wget --no-verbose <%= foreman_url("provision") -%> -O c:\Windows\Panther\unattend.xml
+echo Applying Unattend.xml
+mkdir C:\MININT\Scratch
+dism.exe /Image:C:\ /Apply-Unattend:C:\Windows\Panther\unattend.xml /ScratchDir:C:\MININT\Scratch/
+
+echo Downloading finish script
+mkdir C:\deploy
+wget --no-verbose <%= foreman_url("finish") -%> -O C:\deploy\foreman-finish.bat
+
+echo Removing %install-image%
+del /q /s C:\%install-image%
+
+echo Downloading drivers
+md C:\drivers
+xcopy "X:\drivers\*.inf" "C:\drivers\" /S /I /Y
+wget <%= proxy_string %> -r -np -nH --cut-dirs=1 -A "*.inf" "<%= medium_uri %>/drivers" -P C:\drivers
+
+echo Downloading updates
+md C:\updates
+xcopy "X:\updates\*.msu" "C:\updates\" /S /I /Y
+wget <%= proxy_string %> -r -np -nH --cut-dirs=1 -A "*.msu" "<%= medium_uri %>/updates" -P C:\updates
+
+echo Applying updates
+for /f %%u in ('dir /s/b C:\updates\*.msu') do dism.exe /Image:C:\ /Add-Package /PackagePath:%%u /ScratchDir:C:\MININT\Scratch/
+
+echo Applying drivers
+dism.exe /Image:C:\ /Add-Driver /Driver:C:\drivers\ /Recurse /ScratchDir:C:\MININT\Scratch/
+
+echo Copying tools
+copy x:\windows\system32\wget.exe C:\deploy\
+copy x:\windows\system32\wget.exe C:\Windows\wget.exe
+copy x:\windows\system32\sdelete.exe C:\Windows\
+IF not exist C:\Windows\Setup\Scripts (md C:\Windows\Setup\Scripts)
+echo call C:\deploy\foreman-finish.bat ^> c:\foreman.log 2^>^&1 > C:\Windows\Setup\Scripts\SetupComplete.cmd
+
+<% unless host_param('foremanDebug') -%>
+sdelete.exe -accepteula -p 2 c:\foreman.log
+<% end -%>
+
+echo Setting the boot sector
+bootsect.exe /nt60 C:
+:: Architecture check to determine if we need to do BIOS or UEFI boot files
+for /f "tokens=2 delims== " %%i in ('wmic computersystem get BootupState /value') do set BootState=%%i
+
+if /i "%BootState%"=="Normal boot" (
+    echo Legacy BIOS detected
+    C:\Windows\System32\bcdboot C:\Windows /s C: /f BIOS
+) else (
+    echo UEFI detected
+    C:\Windows\System32\bcdboot C:\Windows /s K: /f UEFI
+)
+
+for /f "tokens=2 delims={}" %%i in ('bcdedit /enum firmware ^| find "Windows Boot Manager"') do (
+    set guid={%%i}
+)
+
+bcdedit /set {fwbootmgr} displayorder !guid! /addfirst
+endlocal
+
+echo Foreman build has finished
+wget <%= foreman_url('built') %>
+
+wpeutil reboot
