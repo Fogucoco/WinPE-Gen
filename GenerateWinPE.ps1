@@ -111,7 +111,6 @@ md .\result\
 Invoke-WebRequest -Uri "https://github.com/ipxe/wimboot/raw/refs/heads/master/wimboot" -OutFile ".\result\wimboot"
 
 Write-Host "Copying result files"
-md result
 Copy-Item -Path .\.tmp\WinPE_amd64\media\boot\BCD -Destination .\result\bcd
 Copy-Item -Path .\.tmp\WinPE_amd64\media\boot\boot.sdi -Destination .\result\boot.sdi
 Copy-Item -Path .\.tmp\WinPE_amd64\media\sources\boot.wim -Destination .\result\boot.wim
