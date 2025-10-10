@@ -115,6 +115,7 @@ if (-not (Test-Path ".\result")) {
 
 # Commiting changes and unmounting WinPE image
 Write-Host "Committing and unmounting WinPE image"
+Write-Host "It may take a while before Dism actually starts showing the progress bar. `nIf it doesn't show up after 10-15 minutes, something probably went wrong."
 Dism /Unmount-Image /MountDir:$winPEMountPath /Commit
 
 # Downloading wimboot
