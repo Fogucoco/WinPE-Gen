@@ -38,4 +38,4 @@ It's better to put driver directories as your manufacturer provided to keep the 
     3. Some drivers depend on others. Manufacturers provide drivers in folders organized in a specific sequence, which you should preserve
 ___
 **Author:** Sergey Malyuk  
-**License:** GPL
+**License:** GPL-3.0
