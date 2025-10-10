@@ -1,6 +1,6 @@
 # WinPE-Gen
 ### Description
-Generates WinPE image for Foreman provisioning
+Generates WinPE image for Foreman Windows provisioning
 
 ### Requirements
 - Windows
