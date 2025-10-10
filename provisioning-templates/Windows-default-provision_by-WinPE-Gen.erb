@@ -24,7 +24,7 @@ description: |
   setup_ui_lang = 'en-US'
   input_locale = host_param('inputLocale', 'en-US')
   system_timezone = host_param('systemTimeZone', 'GMT Standard Time')
-  network_location = host_param('networkLocation', 'Public')
+  network_location = host_param('networkLocation', 'Other')
   edition_index = host_param('editionIndex', 1)
   admin_pass = host_param('adminPassword', '12345678')
 -%>
@@ -33,7 +33,7 @@ description: |
     <servicing></servicing>
     <settings pass="offlineServicing">
         <component name="Microsoft-Windows-LUA-Settings" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <EnableLUA>false</EnableLUA>
+            <EnableLUA>true</EnableLUA>
         </component>
     </settings>
     <settings pass="windowsPE">
@@ -43,7 +43,6 @@ description: |
             <Restart>Restart</Restart>
             <ImageInstall>
                 <OSImage>
-                    <ImageIndex><%= edition_index %></ImageIndex>
                     <InstallToAvailablePartition>true</InstallToAvailablePartition>
                     <WillShowUI>OnError</WillShowUI>
                 </OSImage>
@@ -84,7 +83,7 @@ description: |
                         <Group>Administrators</Group>
                         <Name>Administrator</Name>
                     </LocalAccount>
-            <% if host_param('ansible_user') && host_param('create_ansible_user') -%>
+                    <% if host_param('ansible_user') && host_param('create_ansible_user') -%>
                     <LocalAccount wcm:action="add">
                         <Password>
                             <Value><![CDATA[<%= host_param('ansible_ssh_pass') %>]]></Value>
@@ -127,9 +126,6 @@ description: |
               <UILanguageFallback><%= setup_ui_lang %></UILanguageFallback>
               <UILanguage><%= system_ui_lang %></UILanguage>
               <UserLocale><%= system_locale %></UserLocale>
-        </component>
-        <component name="Microsoft-Windows-IE-ESC" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            <IEHardenAdmin>false</IEHardenAdmin>
         </component>
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <ComputerName><%= @host.shortname -%></ComputerName>
