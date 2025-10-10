@@ -41,7 +41,6 @@ foreach ($line in $envVars) {
     }
 }
 
-
 # Download binaries
 # wget.exe existance check and download if not
 Write-Host "Downloading binaries"
@@ -84,8 +83,16 @@ Write-Host "Copying binaries to WinPE"
 copy ".\files\*.exe" $winPEMountPath\Windows\System32\
 
 Write-Host "Creating drivers and updates directories in WinPE"
-md $winPEMountPath\drivers
-md $winPEMountPath\updates
+if (-not (Test-Path "$winPEMountPath\drivers")) {
+    New-Item -ItemType Directory -Path "$winPEMountPath\drivers"
+} else {
+    Write-Host "Drivers directory already exists in WinPE, skipping creation"
+}
+if (-not (Test-Path "$winPEMountPath\updates")) {
+    New-Item -ItemType Directory -Path "$winPEMountPath\updates"
+} else {
+    Write-Host "Updates directory already exists in WinPE, skipping creation"
+}
 
 Write-Host "Installing drivers to WinPE image"
 Dism /Image:$winPEMountPath /Add-Driver /Driver:.\drivers /Recurse /ForceUnsigned
@@ -99,13 +106,16 @@ Get-ChildItem -Path ".\updates" -Recurse -Filter *.msu | Copy-Item -Destination 
 Write-Host "Copying startnet.cmd to WinPE"
 Copy-Item -Path .\files\startnet.cmd -Destination "$winPEMountPath\Windows\System32\startnet.cmd" -Force
 
+Write-Host "Creating .\result directory"
+if (-not (Test-Path ".\result")) {
+    New-Item -ItemType Directory -Path ".\result"
+} else {
+    Write-Host ".\result directory already exists, skipping creation"
+}
 
 # Commiting changes and unmounting WinPE image
 Write-Host "Committing and unmounting WinPE image"
 Dism /Unmount-Image /MountDir:$winPEMountPath /Commit
-
-# Creating result directory
-md .\result\
 
 # Downloading wimboot
 Invoke-WebRequest -Uri "https://github.com/ipxe/wimboot/raw/refs/heads/master/wimboot" -OutFile ".\result\wimboot"
