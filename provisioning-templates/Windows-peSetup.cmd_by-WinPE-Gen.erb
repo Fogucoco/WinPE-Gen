@@ -55,10 +55,10 @@ echo Installing %install-image%
 dism /Apply-Image /ImageFile:C:\%install-image% /Index:%editionIndex% /ApplyDir:C:\
 
 echo Downloading unattend.xml
-wget --no-verbose <%= foreman_url("provision") -%> -O c:\Windows\Panther\unattend.xml
+wget --no-verbose <%= foreman_url("provision") -%> -O C:\Windows\Panther\unattend.xml
 echo Applying Unattend.xml
 mkdir C:\MININT\Scratch
-dism.exe /Image:C:\ /Apply-Unattend:C:\Windows\Panther\unattend.xml /ScratchDir:C:\MININT\Scratch/
+dism.exe /Image:C:\ /Apply-Unattend:C:\Windows\Panther\unattend.xml /ScratchDir:C:\MININT\Scratch\
 
 echo Downloading finish script
 mkdir C:\deploy
@@ -78,20 +78,20 @@ xcopy "X:\updates\*.msu" "C:\updates\" /S /I /Y
 wget <%= proxy_string %> -r -np -nH --cut-dirs=1 -A "*.msu" "<%= medium_uri %>/updates" -P C:\updates
 
 echo Applying updates
-for /f %%u in ('dir /s/b C:\updates\*.msu') do dism.exe /Image:C:\ /Add-Package /PackagePath:%%u /ScratchDir:C:\MININT\Scratch/
+for /f %%u in ('dir /s/b C:\updates\*.msu') do dism.exe /Image:C:\ /Add-Package /PackagePath:%%u /ScratchDir:C:\MININT\Scratch\
 
 echo Applying drivers
-dism.exe /Image:C:\ /Add-Driver /Driver:C:\drivers\ /Recurse /ScratchDir:C:\MININT\Scratch/
+dism.exe /Image:C:\ /Add-Driver /Driver:C:\drivers\ /Recurse /ScratchDir:C:\MININT\Scratch\
 
 echo Copying tools
 copy x:\windows\system32\wget.exe C:\deploy\
 copy x:\windows\system32\wget.exe C:\Windows\wget.exe
 copy x:\windows\system32\sdelete.exe C:\Windows\
 IF not exist C:\Windows\Setup\Scripts (md C:\Windows\Setup\Scripts)
-echo call C:\deploy\foreman-finish.bat ^> c:\foreman.log 2^>^&1 > C:\Windows\Setup\Scripts\SetupComplete.cmd
+echo call C:\deploy\foreman-finish.bat ^> C:\foreman.log 2^>^&1 > C:\Windows\Setup\Scripts\SetupComplete.cmd
 
 <% unless host_param('foremanDebug') -%>
-sdelete.exe -accepteula -p 2 c:\foreman.log
+sdelete.exe -accepteula -p 2 C:\foreman.log
 <% end -%>
 
 echo Setting the boot sector
@@ -106,13 +106,6 @@ if /i "%BootState%"=="Normal boot" (
     echo UEFI detected
     C:\Windows\System32\bcdboot C:\Windows /s K: /f UEFI
 )
-
-for /f "tokens=2 delims={}" %%i in ('bcdedit /enum firmware ^| find "Windows Boot Manager"') do (
-    set guid={%%i}
-)
-
-bcdedit /set {fwbootmgr} displayorder !guid! /addfirst
-endlocal
 
 echo Foreman build has finished
 wget <%= foreman_url('built') %>
